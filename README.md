@@ -1,8 +1,22 @@
 # autopecas-infra-db
 
+## Propósito
+
 Infraestrutura do banco de dados gerenciado do Autopeças, separada do
 repositório da Lambda e da aplicação. Usa PostgreSQL 16 em Amazon RDS,
 Terraform, AWS provider e GitHub Actions. O alvo inicial é o AWS Academy Learner Lab.
+
+## Tecnologias utilizadas
+
+| Componente | Tecnologia |
+| --- | --- |
+| Banco gerenciado | Amazon RDS PostgreSQL 16 |
+| Infraestrutura | Terraform e AWS provider |
+| Rede e proteção | VPC, subnets, security groups e TLS |
+| Estado da infraestrutura | S3 com chaves por ambiente e lockfile |
+| Administração e permissões | SQL e psql |
+| Validação | Testes Terraform simulados, Python 3 e PostgreSQL em Docker |
+| Integração contínua | GitHub Actions para validação |
 
 ## Arquitetura
 
@@ -24,9 +38,10 @@ A fixture de teste da Lambda não deve ser aplicada no banco gerenciado.
 
 A rede existente deve fornecer sub-redes na mesma VPC em ao menos duas zonas.
 Os exemplos incluem os IDs consultados no Lab em us-east-1; confirme-os antes
-de usar, pois não são portáveis para outras contas. As sub-redes atuais são
-públicas, mas a instância RDS fica sem acesso público. Em uma infraestrutura
-definitiva, forneça sub-redes privadas do repositório Kubernetes/rede.
+de usar, pois não são portáveis para outras contas. A instância RDS fica sem acesso público. Para integrar com o EKS, use os
+outputs vpc_id e private_subnet_ids do repositório Kubernetes/rede, junto
+com o SG real dos nós. Os IDs históricos do Lab não descrevem necessariamente
+a rede atualmente provisionada.
 
 O perfil de laboratório usa uma instância db.t3.micro, sem Multi-AZ,
 com 20 GiB de armazenamento gp3 criptografado e sem crescimento automático.
@@ -141,8 +156,26 @@ contêm segredos e não devem ser publicados.
 Em 25/10/2026, o plano real de produção foi validado: **7 recursos a criar,
 0 a alterar e 0 a destruir**. Não foi executado apply de produção.
 A preparação preserva a homologação e não cria um segundo RDS.
-O SG da aplicação continua vazio até existir uma origem Kubernetes real;
+Os exemplos deixam o SG da aplicação vazio; informe a origem Kubernetes real;
 quando informado, o Terraform verifica se ele pertence à VPC do banco.
+
+## Documentação das APIs
+
+Este repositório provisiona infraestrutura e não oferece API HTTP própria. As APIs de negócio pertencem à [aplicação principal](https://github.com/16soat-fiap/16SOAT-TechChallenge1).
+
+- [Swagger UI da aplicação](http://localhost:8080/swagger-ui.html).
+- [Especificação OpenAPI](http://localhost:8080/v3/api-docs).
+- [Autenticação e coleção Postman da Lambda](https://github.com/16soat-fiap/autopecas-lambda-auth#readme).
+
+Os endereços localhost exigem a aplicação em execução na porta 8080. Para acessar o Swagger de uma aplicação já publicada no EKS, com kubectl e o contexto do cluster configurados:
+
+~~~bash
+kubectl -n homologacao port-forward service/autopecas-api 8080:8080
+~~~
+
+Mantenha o comando aberto e acesse o Swagger pelo link local. Para produção, substitua o namespace por producao.
+
+O catálogo atual do Gateway não publica /swagger-ui.html nem /v3/api-docs; por isso não se anuncia um endereço externo de Swagger que não esteja roteado.
 
 ## Integração com a Lambda e a aplicação
 
@@ -212,8 +245,9 @@ Após novas migrations, revise a lista explícita de tabelas e sequências em
 Isso não redefine a senha. Não há concessão automática de acesso a novas
 tabelas, evitando expor tabelas sensíveis criadas no futuro.
 
-Estes scripts foram preparados e testados localmente. O usuário da aplicação
-não foi criado no RDS nesta etapa. Nenhuma migration foi modificada.
+Os scripts foram preparados e testados localmente. Sua presença no repositório
+não significa que tenham sido executados em um banco; confirme os usuários e
+privilégios no ambiente antes do deploy. As migrations pertencem à aplicação.
 
 ## Primeiro teste de homologação
 
@@ -223,9 +257,10 @@ permissões restritas. A função temporária de migrations foi removida.
 O perfil utilizado não tem Multi-AZ, backups, snapshot final ou crescimento
 automático do disco. Os recursos provisionados consomem créditos do Lab.
 
-## Situação da homologação
+## Registro histórico da homologação
 
 Em 25/10/2026, a autenticação por CPF foi validada na AWS, com V1/V2/V4
 aplicadas e `lambda_auth` somente para leitura. O RDS de homologação foi
-reativado a pedido do usuário para testes manuais. A produção continua
-apenas preparada em configuração e plano, sem instância provisionada.
+reativado a pedido do usuário para testes manuais. Esse registro descreve a validação de 25/10/2026; não comprova o estado
+atual dos recursos. Consulte a conta AWS e o state de cada ambiente para
+verificar a infraestrutura existente.
