@@ -30,9 +30,7 @@ flowchart LR
 ~~~
 
 Este repositório cria a instância e o banco vazio, subnet group, parameter
-group com TLS obrigatório e security groups. Não cria cluster, VPC, tabelas ou
-dados de clientes. As migrations pertencem à aplicação principal.
-A fixture de teste da Lambda não deve ser aplicada no banco gerenciado.
+group com TLS obrigatório e security groups. 
 
 ## Configuração
 
@@ -46,21 +44,6 @@ a rede atualmente provisionada.
 O perfil de laboratório usa uma instância db.t3.micro, sem Multi-AZ,
 com 20 GiB de armazenamento gp3 criptografado e sem crescimento automático.
 Backups automáticos e snapshot final estão desativados.
-A proteção contra exclusão permanece ativa para evitar remoção acidental;
-ela não cria uma instância adicional.
-Ao desabilitar essa proteção e excluir o banco, os dados não serão recuperáveis.
-
-Os exemplos de homologação e produção usam esse mesmo perfil econômico.
-Mantenha apenas um ambiente provisionado por vez no Lab de US$ 50.
-Isso é uma concessão do laboratório, não uma configuração de produção
-com alta disponibilidade. A pipeline de deploy é responsabilidade de outro
-integrante; este repositório fornece sua configuração e validações.
-
-A instância e o disco continuam gerando custos. Parar o RDS reduz cobrança
-de computação, mas não a de armazenamento. Não assuma gratuidade do Lab.
-Consulte [preços RDS](https://aws.amazon.com/rds/postgresql/pricing/).
-Desativar backups não garante economia em todos os casos: a cobrança depende
-do armazenamento de backup e das condições da conta.
 
 A senha do administrador é fornecida por TF_VAR_db_password. Ela é sensível
 na saída, mas fica no state e nos planos salvos. Não use essa conta na Lambda.
